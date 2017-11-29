@@ -61,4 +61,17 @@ describe('Save newlines', function () {
             assert.equal(sentences[1], "Peter Piper Picked a peck of pickled peppers.");
         });
     });
+
+    describe('funny punctuation', function () {
+        var entry = `ab cd++++ef gh####ij kl****mn op`;
+
+        var sentences = tokenizer.sentences(entry, { "newline_boundaries":  true });
+
+        it('Should have 4 sentences ', function () {
+            assert.equal(sentences[0], "ab cd");
+            assert.equal(sentences[1], "ef gh");
+            assert.equal(sentences[2], "ij kl");
+            assert.equal(sentences[3], "mn op");
+        });
+    });
 });

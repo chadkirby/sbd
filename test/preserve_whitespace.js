@@ -44,4 +44,16 @@ describe('Preserve whitespace', function () {
         });
     });
 
+    describe('with newline_boundaries', function () {
+        var entry = "The humble bundle sale\r\nDate: Monday-Fri starting 2015-01-01\nSales starting at ¤2,50";
+        var sentences = tokenizer.sentences(entry, Object.assign({ "newline_boundaries": true }, options));
+
+        it("should get 3 sentences", function () {
+            assert.equal(sentences.length, 3);
+        });
+        it('whitespace is preserved in the sentences', function () {
+            assert.equal(sentences.join(''), entry);
+        });
+    });
+
 });
