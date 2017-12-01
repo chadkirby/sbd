@@ -51,13 +51,4 @@ describe('Sentences with symbols', function () {
             assert.equal(sentences.length, 1);
         });
     });
-
-    describe('Newlines/paragraph enabled ends sentences', function () {
-        var entry = "The humble bundle sale\r\nDate: Monday-Fri starting 2015-01-01\nSales starting at ¤2,50";
-        var sentences = tokenizer.sentences(entry, { "newline_boundaries": true });
-
-        it("should get 3 sentences", function () {
-            assert.equal(sentences.length, 3);
-        });
-    });
 });
