@@ -25,6 +25,7 @@
   "license": "MIT",
   "readmeFilename": "README.md",
   "devDependencies": {
+    "eslint": "^4.12.1",
     "git-release": "^0.6.0",
     "mocha": "^3.3.0"
   },
