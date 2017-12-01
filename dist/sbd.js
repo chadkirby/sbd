@@ -178,97 +178,42 @@ exports.isBoundaryChar = function(word) {
 };
 
 },{}],2:[function(require,module,exports){
-
-exports.endsWithChar = function ends_with_char(word, c) {
-    if (c.length > 1) {
-        return c.indexOf(word.slice(-1)) > -1;
-    }
-
-    return word.slice(-1) === c;
-};
-
-exports.endsWith = function ends_with(word, end) {
-    return word.slice(word.length - end.length) === end;
-};
-},{}],3:[function(require,module,exports){
-
-module.exports = function sanitizeHtml(text, opts) {
-  // Strip HTML from Text using browser HTML parser
-  if (typeof text == 'string' || text instanceof String) {
-    var $div = document.createElement("DIV");
-    $div.innerHTML = text;
-    text =  ($div.textContent || '').trim();
-  }
-  //DOM Object
-  else if (typeof text === 'object' && text.textContent) {
-    text = (text.textContent || '').trim();
-  }
-
-  return text;
-};
-
-},{}],4:[function(require,module,exports){
 /*jshint node:true, laxcomma:true */
 "use strict";
 
-var sanitizeHtml = require('sanitize-html');
-
-var String = require('./String');
 var Match  = require('./Match');
-
-var newline_placeholder = " @~@ ";
-var newline_placeholder_t = newline_placeholder.trim();
-
 
 // Split the entry into sentences.
 exports.sentences = function(text, user_options) {
     if (!text || typeof text !== "string" || !text.length) {
         return [];
     }
+    
+    if (!/\S/.test(text)) {
+      // whitespace-only string has no sentences
+      return [];
+    }
 
     var options = {
-        "newline_boundaries"  : false,
-        "html_boundaries"     : false,
-        "html_boundaries_tags": ["p","div","ul","ol"],
-        "sanitize"            : false,
-        "allowed_tags"        : false,
+        "preserve_whitespace" : false,
         "abbreviations"       : null
     };
 
-    if (typeof user_options === "boolean") {
-        // Deprecated quick option
-        options.newline_boundaries = true;
-    }
-    else {
-        // Extend options
-        for (var k in user_options) {
-            options[k] = user_options[k];
-        }
-    }
+      // Extend options
+      for (var k in user_options) {
+          options[k] = user_options[k];
+      }
 
     Match.setAbbreviations(options.abbreviations);
 
-    if (options.newline_boundaries) {
-        text = text.replace(/\n+|[-#=_+*]{4,}/g, newline_placeholder);
-    }
-
-    if (options.html_boundaries) {
-        var html_boundaries_regexp = "(<br\\s*\\/?>|<\\/(" + options.html_boundaries_tags.join("|") + ")>)";
-        var re = new RegExp(html_boundaries_regexp, "g");
-        text = text.replace(re, "$1" + newline_placeholder);
-    }
-
-    if (options.sanitize || options.allowed_tags) {
-        if (! options.allowed_tags) {
-            options.allowed_tags = [""];
-        }
-
-        text = sanitizeHtml(text, { "allowedTags" : options.allowed_tags });
-    }
-
     // Split the text into words
-    // - see http://blog.tompawlak.org/split-string-into-tokens-javascript
-    var words = text.trim().match(/\S+|\n/g);
+    var words;
+    var tokens;
+    tokens = text.split(/(\S+|\n+)/);
+    // every other token is a word
+    words = tokens.filter(function (token, ii) {
+      return ii % 2;
+    });
 
     var wordCount = 0;
     var index = 0;
@@ -281,25 +226,18 @@ exports.sentences = function(text, user_options) {
         return [];
     }
 
-    for (var i=0, L=words.length; i < L; i++) {
+    for (var ii=0, L=words.length; ii < L; ii++) {
         wordCount++;
 
         // Add the word to current sentence
-        current.push(words[i]);
+        current.push(words[ii]);
 
         // Sub-sentences, reset counter
-        if (~words[i].indexOf(',')) {
+        if (~words[ii].indexOf(',')) {
             wordCount = 0;
         }
 
-        if (Match.isBoundaryChar(words[i])      ||
-            String.endsWithChar(words[i], "?!") ||
-            words[i] === newline_placeholder_t)
-        {
-            if ((options.newline_boundaries || options.html_boundaries) && words[i] === newline_placeholder_t) {
-                current.pop();
-            }
-
+        if (Match.isBoundaryChar(words[ii]) || /[?!]$/.test(words[ii])) {
             sentences.push(current);
 
             wordCount = 0;
@@ -309,59 +247,58 @@ exports.sentences = function(text, user_options) {
         }
 
 
-        if (String.endsWithChar(words[i], "\"") || String.endsWithChar(words[i], "”")) {
-            // endQuote = words[i].slice(-1);
-            words[i] = words[i].slice(0, -1);
+        if (/["”"]$/.test(words[ii])) {
+            words[ii] = words[ii].slice(0, -1);
         }
 
         // A dot might indicate the end sentences
         // Exception: The next sentence starts with a word (non abbreviation)
         //            that has a capital letter.
-        if (String.endsWithChar(words[i], '.')) {
+        if (/[.]$/.test(words[ii])) {
             // Check if there is a next word
             // This probably needs to be improved with machine learning
-            if (i+1 < L) {
+            if (ii+1 < L) {
                 // Single character abbr.
-                if (words[i].length === 2 && isNaN(words[i].charAt(0))) {
+                if (words[ii].length === 2 && isNaN(words[ii].charAt(0))) {
                     continue;
                 }
 
                 // Common abbr. that often do not end sentences
-                if (Match.isCommonAbbreviation(words[i])) {
+                if (Match.isCommonAbbreviation(words[ii])) {
                     continue;
                 }
 
                 // Next word starts with capital word, but current sentence is
                 // quite short
-                if (Match.isSentenceStarter(words[i+1])) {
-                    if (Match.isTimeAbbreviation(words[i], words[i+1])) {
+                if (Match.isSentenceStarter(words[ii+1])) {
+                    if (Match.isTimeAbbreviation(words[ii], words[ii+1])) {
                         continue;
                     }
 
                     // Dealing with names at the start of sentences
-                    if (Match.isNameAbbreviation(wordCount, words.slice(i, 6))) {
+                    if (Match.isNameAbbreviation(wordCount, words.slice(ii, 6))) {
                         continue;
                     }
 
-                    if (Match.isNumber(words[i+1])) {
-                        if (Match.isCustomAbbreviation(words[i])) {
+                    if (Match.isNumber(words[ii+1])) {
+                        if (Match.isCustomAbbreviation(words[ii])) {
                             continue;
                         }
                     }
                 }
                 else {
                     // Skip ellipsis
-                    if (String.endsWith(words[i], "..")) {
+                    if (/[.]{2}$/.test(words[ii])) {
                         continue;
                     }
 
                     //// Skip abbreviations
                     // Short words + dot or a dot after each letter
-                    if (Match.isDottedAbbreviation(words[i])) {
+                    if (Match.isDottedAbbreviation(words[ii])) {
                         continue;
                     }
 
-                    if (Match.isNameAbbreviation(wordCount, words.slice(i, 5))) {
+                    if (Match.isNameAbbreviation(wordCount, words.slice(ii, 5))) {
                         continue;
                     }
                 }
@@ -375,23 +312,23 @@ exports.sentences = function(text, user_options) {
         }
 
         // Check if the word has a dot in it
-        if ((index = words[i].indexOf(".")) > -1) {
-            if (Match.isNumber(words[i], index)) {
+        if ((index = words[ii].indexOf(".")) > -1) {
+            if (Match.isNumber(words[ii], index)) {
                 continue;
             }
 
             // Custom dotted abbreviations (like K.L.M or I.C.T)
-            if (Match.isDottedAbbreviation(words[i])) {
+            if (Match.isDottedAbbreviation(words[ii])) {
                 continue;
             }
 
             // Skip urls / emails and the like
-            if (Match.isURL(words[i]) || Match.isPhoneNr(words[i])) {
+            if (Match.isURL(words[ii]) || Match.isPhoneNr(words[ii])) {
                 continue;
             }
         }
 
-        if (temp = Match.isConcatenated(words[i])) {
+        if ((temp = Match.isConcatenated(words[ii]))) {
             current.pop();
             current.push(temp[0]);
             sentences.push(current);
@@ -415,18 +352,30 @@ exports.sentences = function(text, user_options) {
         return s.length > 0;
     });
 
-    for (var i=0; i < sentences.length; i++) {
-        sentence = sentences[i].join(" ");
+    for (var jj=0; jj < sentences.length; jj++) {
+        if (options.preserve_whitespace) {
+          // tokens looks like so: [leading-space token, non-space token, space
+          // token, non-space token, space token... ]. In other words, the first
+          // item is the leading space (or the empty string), and the rest of
+          // the tokens are [non-space, space] token pairs.
+          var tokenCount = sentences[jj].length * 2;
+          if (jj === 0) {
+            tokenCount += 1;
+          }
+          sentence = tokens.splice(0, tokenCount).join('');
+        } else {
+          sentence = sentences[jj].join(" ");
+        }
 
         // Single words, could be "enumeration lists"
-        if (sentences[i].length === 1 && sentences[i][0].length < 4 &&
-            sentences[i][0].indexOf('.') > -1)
+        if (sentences[jj].length === 1 && sentences[jj][0].length < 4 &&
+            sentences[jj][0].indexOf('.') > -1)
         {
             // Check if there is a next sentence
             // It should not be another list item
-            if (sentences[i+1] && sentences[i+1][0].indexOf('.') < 0) {
-                sentence += " " + sentences[i+1].join(" ");
-                i++;
+            if (sentences[jj+1] && sentences[jj+1][0].indexOf('.') < 0) {
+                sentence += " " + sentences[jj+1].join(" ");
+                jj++;
             }
         }
 
@@ -436,5 +385,5 @@ exports.sentences = function(text, user_options) {
     return result;
 };
 
-},{"./Match":1,"./String":2,"sanitize-html":3}]},{},[4])(4)
+},{"./Match":1}]},{},[2])(2)
 });
