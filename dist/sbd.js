@@ -343,46 +343,42 @@ exports.sentences = function(text, user_options) {
         sentences.push(current);
     }
 
-    /** After processing */
-    var result   = [];
-    var sentence = "";
-
     // Clear "empty" sentences
     sentences = sentences.filter(function(s) {
         return s.length > 0;
     });
-
-    for (var jj=0; jj < sentences.length; jj++) {
-        if (options.preserve_whitespace) {
-          // tokens looks like so: [leading-space token, non-space token, space
-          // token, non-space token, space token... ]. In other words, the first
-          // item is the leading space (or the empty string), and the rest of
-          // the tokens are [non-space, space] token pairs.
-          var tokenCount = sentences[jj].length * 2;
-          if (jj === 0) {
-            tokenCount += 1;
+    
+    var result = sentences.slice(1).reduce(function (out, sentence) {
+      var lastSentence = out[out.length - 1];
+      // Single words, could be "enumeration lists"
+      if (lastSentence.length === 1 && /^.{1,2}[.]$/.test(lastSentence[0])) {
+          // Check if there is a next sentence
+          // It should not be another list item
+          if (!/[.]/.test(sentence[0])) {
+              out.pop()
+              out.push(lastSentence.concat(sentence));
+              return out;
           }
-          sentence = tokens.splice(0, tokenCount).join('');
-        } else {
-          sentence = sentences[jj].join(" ");
+      }
+      out.push(sentence);
+      return out;
+    }, [ sentences[0] ]);
+
+    // join tokens back together
+    return result.map(function (sentence, ii) {
+      if (options.preserve_whitespace) {
+        // tokens looks like so: [leading-space token, non-space token, space
+        // token, non-space token, space token... ]. In other words, the first
+        // item is the leading space (or the empty string), and the rest of
+        // the tokens are [non-space, space] token pairs.
+        var tokenCount = sentence.length * 2;
+        if (ii === 0) {
+          tokenCount += 1;
         }
-
-        // Single words, could be "enumeration lists"
-        if (sentences[jj].length === 1 && sentences[jj][0].length < 4 &&
-            sentences[jj][0].indexOf('.') > -1)
-        {
-            // Check if there is a next sentence
-            // It should not be another list item
-            if (sentences[jj+1] && sentences[jj+1][0].indexOf('.') < 0) {
-                sentence += " " + sentences[jj+1].join(" ");
-                jj++;
-            }
-        }
-
-        result.push(sentence);
-    }
-
-    return result;
+        return tokens.splice(0, tokenCount).join('');
+      }
+      return sentence.join(" ");
+    });
 };
 
 },{"./Match":1}]},{},[2])(2)
