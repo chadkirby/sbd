@@ -1,5 +1,5 @@
 {
-  "name": "sbd",
+  "name": "@ckirby/sbd",
   "version": "2.0.1",
   "description": "Split text into sentences with Sentence Boundary Detection (SBD).",
   "main": "lib/tokenizer.js",
@@ -9,10 +9,10 @@
     "build:minify": "uglifyjs dist/sbd.js > dist/sbd.min.js",
     "build": "npm run build:js && npm run build:minify"
   },
-  "homepage": "http://github.com/Tessmore/sbd",
+  "homepage": "http://github.com/chadkirby/sbd",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Tessmore/sbd.git"
+    "url": "https://github.com/chadkirby/sbd.git"
   },
   "keywords": [
     "sentence",

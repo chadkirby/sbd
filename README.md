@@ -19,7 +19,7 @@ Use [npm](http://npmjs.org):
 ## How to
 
 ```javascript
-var tokenizer = require('sbd');
+var tokenizer = require('@ckirby/sbd');
 
 var text = "On Jan. 20, former Sen. Barack Obama became the 44th President of the U.S. Millions attended the Inauguration.";
 var sentences = tokenizer.sentences(text, optional_options);
