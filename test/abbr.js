@@ -80,4 +80,15 @@ describe('Abbreviations in sentences', function () {
             assert.equal(sentences.length, 3);
         })
     });
+    
+    describe('Skip all-caps abbreviations', function () {
+        var entry = "FIG. 1 shows various things.";
+        var sentences = tokenizer.sentences(entry);
+
+        it("should get 1 sentences", function () {
+            assert.equal(sentences.length, 1);
+        });
+    });
+
+
 });
