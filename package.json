@@ -1,6 +1,6 @@
 {
   "name": "@ckirby/sbd",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "description": "Split text into sentences with Sentence Boundary Detection (SBD).",
   "main": "lib/tokenizer.js",
   "scripts": {
