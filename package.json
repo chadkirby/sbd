@@ -3,11 +3,11 @@
   "version": "2.1.0",
   "description": "Split text into sentences with Sentence Boundary Detection (SBD).",
   "main": "lib/tokenizer.js",
+  "files": [
+    "lib"
+  ],
   "scripts": {
-    "test": "mocha -R spec",
-    "build:js": "browserify lib/tokenizer.js --standalone tokenizer > dist/sbd.js",
-    "build:minify": "uglifyjs dist/sbd.js > dist/sbd.min.js",
-    "build": "npm run build:js && npm run build:minify"
+    "test": "mocha -R spec"
   },
   "homepage": "http://github.com/chadkirby/sbd",
   "repository": {
