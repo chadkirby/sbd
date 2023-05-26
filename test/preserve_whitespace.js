@@ -48,5 +48,16 @@ describe('Preserve whitespace', function () {
             assert.equal(sentences[2], "In other words, the electrically conductive material can be present in the microheater in a specific pattern.");
         });
     });
+    describe('i.e.', function () {
+        var entry = "Claims 1-9 and 16-19 are rejected under 35 U.S.C. 112(b) or 35 U.S.C. 112 (pre-AIA ), second paragraph, as being indefinite for failing to particularly point out and distinctly claim the subject matter which the inventor or a joint inventor, or for pre-AIA  the applicant regards as the invention.";
+        var sentences = tokenizer.sentences(entry, {preserve_whitespace: false, abbreviations: ['usc']});
+
+        it("should get 1 sentences", function () {
+            assert.equal(sentences.length, 1);
+        });
+        it('sentences are correct', function () {
+            assert.equal(sentences[0], entry.replace(/ {2}/g, ' '));
+        });
+    });
 
 });
