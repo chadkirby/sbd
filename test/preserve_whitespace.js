@@ -59,5 +59,16 @@ describe('Preserve whitespace', function () {
             assert.equal(sentences[0], entry.replace(/ {2}/g, ' '));
         });
     });
+    describe('Patent/Pub.', function () {
+        var entry = "Claim(s) 1-5 is/are rejected under 35 U.S.C. 103(a) as being unpatentable over Kottomtharayil, U.S. Patent/Pub. No. 2006/0224852 A1 in view of Nachimuthu, U.S. Patent/Pub. No. 2008/0115138 A1, and Ahmed, U.S. Pub. No. 2010/0338709 A1, and further ni view of Lee, U.S. Pub. No. 2010/0302884 A1.";
+        var sentences = tokenizer.sentences(entry, { preserve_whitespace: false, abbreviations: ['Pub', 'No', 'US', 'USC'] });
+
+        it("should get 1 sentences", function () {
+            assert.equal(sentences.length, 1);
+        });
+        it('sentences are correct', function () {
+            assert.equal(sentences[0], entry.replace(/ {2}/g, ' '));
+        });
+    });
 
 });
